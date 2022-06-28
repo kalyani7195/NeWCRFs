@@ -17,7 +17,7 @@
 --max_depth 10
 --do_random_rotate
 --degree 2.5
---log_directory ./models/
+--log_directory ./models_crf/
 --multiprocessing_distributed
 --dist_url tcp://127.0.0.1:2345
 
