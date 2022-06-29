@@ -112,7 +112,7 @@ def test(params):
     print('Elapesed time: %s' % str(elapsed_time))
     print('Done.')
     
-    save_name = 'models/result_' + args.model_name
+    save_name = 'models/result_' + args.model_name + '_' + args.dataset
     
     print('Saving result pngs..')
     if not os.path.exists(save_name):
