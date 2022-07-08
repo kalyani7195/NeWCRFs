@@ -56,6 +56,8 @@ if args.dataset == 'kitti' or args.dataset == 'nyu':
     from dataloaders.dataloader import NewDataLoader
 elif args.dataset == 'kittipred':
     from dataloaders.dataloader_kittipred import NewDataLoader
+elif args.dataset == 'amazon':
+    from dataloaders.dataloader_amazon import NewDataLoader
 
 
 def eval(model, dataloader_eval, post_process=False):
@@ -107,6 +109,15 @@ def eval(model, dataloader_eval, post_process=False):
                     eval_mask[45:471, 41:601] = 1
 
             valid_mask = np.logical_and(valid_mask, eval_mask)
+        if args.dataset == 'amazon':
+            conveyor = 0 # during preprocessing the conveyor depths were masked out
+            #print("gt_depth.unique()", gt_depth.unique())
+            #print("gt_depth", gt_depth)
+            # not really using valid mask here
+            eval_mask = np.zeros_like(valid_mask)
+            eval_mask[gt_depth != conveyor] = 1
+            #print(eval_mask.unique())
+            valid_mask = eval_mask
 
         measures = compute_errors(gt_depth[valid_mask], pred_depth[valid_mask])
 

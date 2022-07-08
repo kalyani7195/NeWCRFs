@@ -16,6 +16,10 @@ from tensorboardX import SummaryWriter
 from utils import post_process_depth, flip_lr, silog_loss, compute_errors, eval_metrics, \
                        block_print, enable_print, normalize_result, inv_normalize, convert_arg_line_to_args
 from networks.NewCRFDepth import NewCRFDepth
+#torch.set_printoptions(profile="full")
+
+# import pdb
+# pdb.set_trace()
 
 
 parser = argparse.ArgumentParser(description='NeWCRFs PyTorch implementation.', fromfile_prefix_chars='@')
@@ -91,6 +95,8 @@ if args.dataset == 'kitti' or args.dataset == 'nyu':
     from dataloaders.dataloader import NewDataLoader
 elif args.dataset == 'kittipred':
     from dataloaders.dataloader_kittipred import NewDataLoader
+elif args.dataset == 'amazon':
+    from dataloaders.dataloader_amazon import NewDataLoader
 
 
 def online_eval(model, dataloader_eval, gpu, ngpus, post_process=False):
@@ -142,6 +148,18 @@ def online_eval(model, dataloader_eval, gpu, ngpus, post_process=False):
                     eval_mask[45:471, 41:601] = 1
 
             valid_mask = np.logical_and(valid_mask, eval_mask)
+
+        if args.dataset == 'amazon':
+            conveyor = 0 # during preprocessing the conveyor depths were masked out
+            #print("gt_depth.unique()", gt_depth.unique())
+            #print("gt_depth", gt_depth)
+            # not really using valid mask here
+            eval_mask = np.zeros_like(valid_mask)
+            eval_mask[gt_depth != conveyor] = 1
+            #print(eval_mask.unique())
+            valid_mask = eval_mask
+
+
 
         measures = compute_errors(gt_depth[valid_mask], pred_depth[valid_mask])
 
@@ -269,7 +287,7 @@ def main_worker(gpu, ngpus_per_node, args):
     start_time = time.time()
     duration = 0
 
-    num_log_images = args.batch_size
+    #num_log_images = args.batch_size
     end_learning_rate = args.end_learning_rate if args.end_learning_rate != -1 else 0.1 * args.learning_rate
 
     var_sum = [var.sum().item() for var in model.parameters() if var.requires_grad]
@@ -292,15 +310,29 @@ def main_worker(gpu, ngpus_per_node, args):
 
             image = torch.autograd.Variable(sample_batched['image'].cuda(args.gpu, non_blocking=True))
             depth_gt = torch.autograd.Variable(sample_batched['depth'].cuda(args.gpu, non_blocking=True))
+            num_log_images = len(depth_gt)
 
+           
             depth_est = model(image)
+          
 
             if args.dataset == 'nyu':
                 mask = depth_gt > 0.1
+            elif args.dataset == 'amazon':
+                mask =  torch.zeros_like(depth_gt)
+                conveyor = 0 # during preprocessing the conveyor depths were masked out
+                #print("gt_depth.unique()", depth_gt.unique())
+                #print("gt_depth", depth_gt)
+                #print("depth_est unique", depth_est.unique())
+                mask[depth_gt != conveyor] = 1
+                #mask = eval_mask
             else:
                 mask = depth_gt > 1.0
 
+           
+
             loss = silog_criterion.forward(depth_est, depth_gt, mask.to(torch.bool))
+       
             loss.backward()
             for param_group in optimizer.param_groups:
                 current_lr = (args.learning_rate - end_learning_rate) * (1 - global_step / num_total_steps) ** 0.9 + end_learning_rate
@@ -409,11 +441,11 @@ def main():
         aux_out_path = os.path.join(args.log_directory, args.model_name)
         networks_savepath = os.path.join(aux_out_path, 'networks')
         dataloaders_savepath = os.path.join(aux_out_path, 'dataloaders')
-        command = 'cp newcrfs/train.py ' + aux_out_path
+        command = 'cp /gscratch/cse/kmarathe/models/NeWCRFs/newcrfs/train.py ' + aux_out_path
         os.system(command)
-        command = 'mkdir -p ' + networks_savepath + ' && cp newcrfs/networks/*.py ' + networks_savepath
+        command = 'mkdir -p ' + networks_savepath + ' && cp /gscratch/cse/kmarathe/models/NeWCRFs/newcrfs/networks/*.py ' + networks_savepath
         os.system(command)
-        command = 'mkdir -p ' + dataloaders_savepath + ' && cp newcrfs/dataloaders/*.py ' + dataloaders_savepath
+        command = 'mkdir -p ' + dataloaders_savepath + ' && cp /gscratch/cse/kmarathe/models/NeWCRFs/newcrfs/dataloaders/*.py ' + dataloaders_savepath
         os.system(command)
 
     torch.cuda.empty_cache()

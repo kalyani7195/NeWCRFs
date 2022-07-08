@@ -9,6 +9,9 @@ import numpy as np
 import math
 import torch
 
+# import pdb
+# pdb.set_trace()
+
 
 def convert_arg_line_to_args(arg_line):
     for arg in arg_line.split():
@@ -105,6 +108,14 @@ class silog_loss(nn.Module):
         self.variance_focus = variance_focus
 
     def forward(self, depth_est, depth_gt, mask):
+        # print(mask.unique())
+        # print(mask.size())
+        # print(mask)
+        # print(torch.count_nonzero(mask))
+        # print(depth_est.size())
+        # print(depth_gt.size())
+        #print(depth_est[mask])
+        #print(depth_gt[mask])
         d = torch.log(depth_est[mask]) - torch.log(depth_gt[mask])
         return torch.sqrt((d ** 2).mean() - self.variance_focus * (d.mean() ** 2)) * 10.0
 

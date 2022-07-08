@@ -1,0 +1,31 @@
+--mode train
+--model_name newcrfs_amazon
+--encoder large07
+--pretrain /gscratch/cse/kmarathe/models/NeWCRFs/trasformer/swin_large_patch4_window7_224_22k.pth
+--dataset amazon
+--data_path /gscratch/cse/kmarathe/Amazon_Data/dataset1/
+--gt_path /gscratch/cse/kmarathe/Amazon_Data/dataset1/
+--filenames_file /gscratch/cse/kmarathe/models/NeWCRFs/data_splits/with_packages_only_amazon_synthetic_train_files_with_gt.txt
+--batch_size 8
+--num_epochs 20
+--learning_rate 2e-5
+--weight_decay 1e-2
+--adam_eps 1e-3
+--num_threads 1
+--input_height 480
+--input_width 640
+--max_depth 10
+--do_random_rotate
+--degree 2.5
+--log_directory ./models/
+--multiprocessing_distributed
+--dist_url tcp://127.0.0.1:2345
+
+--log_freq 100
+--do_online_eval
+--eval_freq 1000
+--data_path_eval  /gscratch/cse/kmarathe/Amazon_Data/dataset1/
+--gt_path_eval /gscratch/cse/kmarathe/Amazon_Data/dataset1/
+--filenames_file_eval /gscratch/cse/kmarathe/models/NeWCRFs/data_splits/with_packages_only_amazon_synthetic_val_files_with_gt.txt
+--min_depth_eval 1e-3
+--max_depth_eval 10
